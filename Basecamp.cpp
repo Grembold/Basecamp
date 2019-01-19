@@ -76,6 +76,12 @@ String Basecamp::getSetupModeWifiSecret(){
  */
 bool Basecamp::begin(String fixedWiFiApEncryptionPassword)
 {
+	// Enable serial output
+//	Serial.begin(115200);
+	// Display a simple lifesign
+	Serial.println("");
+	Serial.println("Basecamp Startup");
+
 	// Make sure we only accept valid passwords for ap
 	if (fixedWiFiApEncryptionPassword.length() != 0) {
 		if (fixedWiFiApEncryptionPassword.length() >= wifi.getMinimumSecretLength()) {
@@ -84,12 +90,6 @@ bool Basecamp::begin(String fixedWiFiApEncryptionPassword)
 			Serial.println("Error: Given fixed ap secret is too short. Refusing.");
 		}
 	}
-
-	// Enable serial output
-	Serial.begin(115200);
-	// Display a simple lifesign
-	Serial.println("");
-	Serial.println("Basecamp Startup");
 
 	// Load configuration from internal flash storage.
 	// If configuration.load() fails, reset the configuration
