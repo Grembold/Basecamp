@@ -249,6 +249,7 @@ bool Basecamp::begin(String fixedWiFiApEncryptionPassword)
 
 		web.addInterfaceElement("DeviceName", "input", "Device name","#configform" , "DeviceName");
 
+#ifdef BASECAMP_WIRED_NETWORK
 		// Add an input field for the WIFI data and link it to the corresponding configuration data
 		web.addInterfaceElement("WifiEssid", "input", "WIFI SSID:","#configform" , "WifiEssid");
 		web.addInterfaceElement("WifiPassword", "input", "WIFI Password:", "#configform", "WifiPassword");
@@ -256,7 +257,7 @@ bool Basecamp::begin(String fixedWiFiApEncryptionPassword)
 		web.addInterfaceElement("WifiConfigured", "input", "", "#configform", "WifiConfigured");
 		web.setInterfaceElementAttribute("WifiConfigured", "type", "hidden");
 		web.setInterfaceElementAttribute("WifiConfigured", "value", "true");
-
+#endif
 		// Add input fields for MQTT configurations if it hasn't been disabled
 		if (!configuration.get(ConfigurationKey::mqttActive).equalsIgnoreCase("false")) {
 			web.addInterfaceElement("MQTTHost", "input", "MQTT Host:","#configform" , "MQTTHost");
@@ -334,16 +335,25 @@ void Basecamp::onMqttDisconnect(AsyncMqttClientDisconnectReason reason)
 
 void Basecamp::connectToMqtt(TimerHandle_t xTimer) 
 {
+  static int reconnect = 0;
   AsyncMqttClient *mqtt = (AsyncMqttClient *) pvTimerGetTimerID(xTimer);
 
-  if (WiFi.status() == WL_CONNECTED) {
+  if (WifiControl::isConnected()) {
     Serial.println("Trying to connect ...");
     mqtt->connect();    // has no effect if already connected ( if (_connected) return;) 
+    reconnect = 0;
   }
   else {
     Serial.println("Waiting for WiFi ...");
+    reconnect++;
+    if (reconnect >= 3)
+    {
+      Serial.println("Initiating WiFi reconnect...");
+      reconnect = 0;
+      WiFi.reconnect();
+    }
     xTimerStart(xTimer, 0);
-  }  
+  }
 }
 
 #endif
