@@ -335,16 +335,25 @@ void Basecamp::onMqttDisconnect(AsyncMqttClientDisconnectReason reason)
 
 void Basecamp::connectToMqtt(TimerHandle_t xTimer) 
 {
+  static int reconnect = 0;
   AsyncMqttClient *mqtt = (AsyncMqttClient *) pvTimerGetTimerID(xTimer);
 
   if (WifiControl::isConnected()) {
     Serial.println("Trying to connect ...");
     mqtt->connect();    // has no effect if already connected ( if (_connected) return;) 
+    reconnect = 0;
   }
   else {
     Serial.println("Waiting for WiFi ...");
+    reconnect++;
+    if (reconnect >= 3)
+    {
+      Serial.println("Initiating WiFi reconnect...");
+      reconnect = 0;
+      WiFi.reconnect();
+    }
     xTimerStart(xTimer, 0);
-  }  
+  }
 }
 
 #endif
